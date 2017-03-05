@@ -1,4 +1,5 @@
 #TODO: find if a position, a player is in check, and if the king is checkmated
+#also: handle en passant
 
 init_pos = [' ','R','N','B','Q','K','B','N','R',' ',' ','P','P','P','P','P','P','P','P',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','p','p','p','p','p','p','p','p',' ',' ','r','n','b','q','k','b','n','r',' ']
 
@@ -34,6 +35,13 @@ def extend_direction(position, color, direction, square, continuous):
     if in_board(square) and position[tmp_square] != color:
         res.append(tmp_square)
     return res
+
+def go_to_end_of_direction(position,direction,square):
+    """from a given square, goes to the end of a direction, that is: either the last square on board, or the first piece that is reached."""
+    tmp_square = square + direction
+    while in_board(tmp_square) and position[tmp_square] == ' ':
+        tmp_square = tmp_square + direction
+    return position[tmp_square]
 
 def get_pawn_moves(position, color, square):
     """special function to find out the moves a pawn can make."""
@@ -89,6 +97,36 @@ def get_moves(position,color):
             res.append({square:get_moves_pieces(position,square,piece)})
     return res
 
+def check_if_check(position, color):
+    """return True if *color* is in check, False otherwise."""
+    king = 'K' if color == 'w' else 'k'
+    #get king's position
+    for x,y in [(x,y) for x in range(8) for y in range(8)]:
+        square = coordinates_to_square(x,y)
+        piece = position[square]
+        if piece == king:
+            king_square = square
+            break
+    #checking one step directions
+    sense = 1 if color == 'w' else -1
+    dirs = [(10,['k']),(-10,['k']),(10*sense+1,['k','p']),(10*sense-1,['k','p']),(-10*sense+1,['k']),(-10*sense-1,['k']),(1,['k']),(-1,['k']),
+            (19,['n']),(21,['n']),(12,['n']),(8,['n']),(-12,['n']),(-8,['n']),(-19,['n']),(-21,['n'])]
+    for d in dirs:
+        move, compatible_pieces = d
+        square = king_square + move
+        if position[square] in compatible_pieces:
+            return True
+    #now checking multi steps directions
+    dirs = [(10,['r','q']),(-10,['r','q']),(1,['r','q']),(-1,['r','q']),(11,['b','q']),(9,['b','q']),(-9,['b','q']),(-11,['b','q'])]
+    for d in dirs:
+        move, compatible_pieces = d
+        square = go_to_end_of_direction(position, move, king_square)
+        if position[square] in compatible_pieces:
+            return True
+    return False
+
+def check_en_passant(position, color, last_move):
+    return False
 
 if __name__ == '__main__':
     position = Position()
