@@ -6,11 +6,23 @@ init_pos = [' ','R','N','B','Q','K','B','N','R',' ',' ','P','P','P','P','P','P',
 directions = {'r':[1,-1,10,-10],'b':[11,9,-11,-9],'n':[21,19,12,8,-8,-12,-21,-19],'q':[1,-1,10,-10,11,9,-11,-9],'k':[1,-1,10,-10,11,9,-11,-9],'p':[1]}
 
 class Position:
+
     def __init__(self,board=init_pos,can_castle=True):
         self.board = board
         self.can_castle = can_castle
+        self.last_move = None
+        self.captured_piece = ' '
+        
     def __getitem__(self,square):
         return self.board[square]
+
+    def make_move(self,move):
+        fr, to = move
+        moving_piece = position[fr]
+        position[fr] = ' '
+        self.captured_piece = position[to]
+        position[to] = moving_piece
+        self.last_move = move
 
 squares = range(80)
 
@@ -109,23 +121,38 @@ def check_if_check(position, color):
             break
     #checking one step directions
     sense = 1 if color == 'w' else -1
+    #colorize sets a piece to uppercase if the color is black (because
+    #it's the opposite color)
+    colorize = (lambda x: x.upper()) if color == 'b' else (lambda x: x)
     dirs = [(10,['k']),(-10,['k']),(10*sense+1,['k','p']),(10*sense-1,['k','p']),(-10*sense+1,['k']),(-10*sense-1,['k']),(1,['k']),(-1,['k']),
             (19,['n']),(21,['n']),(12,['n']),(8,['n']),(-12,['n']),(-8,['n']),(-19,['n']),(-21,['n'])]
     for d in dirs:
-        move, compatible_pieces = d
+        move, compatible_pieces = d[0], map(colorize, d[1])
         square = king_square + move
         if position[square] in compatible_pieces:
             return True
     #now checking multi steps directions
     dirs = [(10,['r','q']),(-10,['r','q']),(1,['r','q']),(-1,['r','q']),(11,['b','q']),(9,['b','q']),(-9,['b','q']),(-11,['b','q'])]
     for d in dirs:
-        move, compatible_pieces = d
+        move, compatible_pieces = d[0], map(colorize, d[1])
         square = go_to_end_of_direction(position, move, king_square)
         if position[square] in compatible_pieces:
             return True
     return False
 
-def check_en_passant(position, color, last_move):
+def check_en_passant(position, color):
+    """check if *color* can do an en passant capture."""
+    last_move = position.last_move
+    pawn = 'p' if color == 'w' else 'P'
+    if position[last_move[1]] != pawn:
+        return False
+    sense = -1 if color == 'w' else 1
+    if last_move[1] - last_move[0] != 20*sense:
+        return False
+    left, right = last_move[1] - 1, last_move[1] + 1
+    capturing_pawn = 'P' if color == 'w' else 'p'
+    if position[left] == capturing_pawn or position[right] == capturing_pawn:
+        return True
     return False
 
 if __name__ == '__main__':
