@@ -80,7 +80,15 @@ def get_pawn_moves(position, color, square):
     #TODO: handle promotions
     return res
 
+def convert_square(square):
+    """converts a square in standard notation ("e2") into a number used internally to denote a square (15)."""
+    x, y = ord(square[0])-96,int(square[1])-1
+    return 10*y+x
 
+def convert_move(move):
+    """move is a string like "e2-e4". The function converts it into a move like (15,35). For now only the notation "<from>-<to>" is supported (not the algebraic notation."""
+    fr, to = move.split("-")
+    return (convert_square(fr), convert_square(to))
 
 def get_moves_pieces(position,square, piece):
     lower = piece.lower()
