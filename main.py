@@ -1,7 +1,17 @@
 #TODO: find if a position, a player is in check, and if the king is checkmated
 #also: handle en passant
 
-init_pos = [' ','R','N','B','Q','K','B','N','R',' ',' ','P','P','P','P','P','P','P','P',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','p','p','p','p','p','p','p','p',' ',' ','r','n','b','q','k','b','n','r',' ']
+init_pos_pre = [['R','N','B','Q','K','B','N','R'],
+                ['P','P','P','P','P','P','P','P'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                ['r','n','b','q','k','b','n','r']]
+
+init_pos = reduce(lambda x,y: x+y,map(lambda x: [' '] + x + [' '],init_pos_pre))
+
 
 directions = {'r':[1,-1,10,-10],'b':[11,9,-11,-9],'n':[21,19,12,8,-8,-12,-21,-19],'q':[1,-1,10,-10,11,9,-11,-9],'k':[1,-1,10,-10,11,9,-11,-9],'p':[1]}
 
@@ -18,11 +28,22 @@ class Position:
 
     def make_move(self,move):
         fr, to = move
-        moving_piece = position[fr]
-        position[fr] = ' '
+        moving_piece = self.board[fr]
+        self.board[fr] = ' '
         self.captured_piece = position[to]
-        position[to] = moving_piece
+        self.board[to] = moving_piece
         self.last_move = move
+
+    def __str__(self):
+        res = ""
+        for y in range(8):
+            tmp=""
+            for x in range(1,9):
+                square = 10*y+x
+                tmp += self.board[square]
+            tmp += "\n"
+            res += tmp
+        return res
 
 squares = range(80)
 
@@ -165,4 +186,6 @@ def check_en_passant(position, color):
 
 if __name__ == '__main__':
     position = Position()
-    print(get_moves(position,"w"))
+    print(position)
+    position.make_move(convert_move("e2-e4"))
+    print(position)
