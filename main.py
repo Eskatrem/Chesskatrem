@@ -15,6 +15,15 @@ init_pos = reduce(lambda x,y: x+y,map(lambda x: [' '] + x + [' '],init_pos_pre))
 
 directions = {'r':[1,-1,10,-10],'b':[11,9,-11,-9],'n':[21,19,12,8,-8,-12,-21,-19],'q':[1,-1,10,-10,11,9,-11,-9],'k':[1,-1,10,-10,11,9,-11,-9],'p':[1]}
 
+
+class Move:
+
+    def __init__(self,fr,to,en_passant=False,castle=False):
+        self.fr = fr
+        self.to = to
+        self.en_passant = en_passant
+        self.castle = castle
+
 class Position:
 
     def __init__(self,board=init_pos,can_castle=True):
@@ -27,13 +36,16 @@ class Position:
         return self.board[square]
 
     def make_move(self,move):
-        fr, to = move
+        fr, to = move.fr, move.to
         moving_piece = self.board[fr]
         self.board[fr] = ' '
         self.captured_piece = position[to]
         self.board[to] = moving_piece
         self.last_move = move
-
+        if move.en_passant:
+            #TODO: remove the captured pawn here
+        if move.castle:
+            #TODO: move the rook here
     def __str__(self):
         res = ""
         for y in range(8):
@@ -169,20 +181,33 @@ def check_if_check(position, color):
             return True
     return False
 
-def check_en_passant(position, color):
+
+#TODO: remove from the board the captured pawn
+def list_en_passant(position, color):
     """check if *color* can do an en passant capture."""
     last_move = position.last_move
     pawn = 'p' if color == 'w' else 'P'
     if position[last_move[1]] != pawn:
-        return False
+        return []
     sense = -1 if color == 'w' else 1
     if last_move[1] - last_move[0] != 20*sense:
-        return False
+        return []
     left, right = last_move[1] - 1, last_move[1] + 1
     capturing_pawn = 'P' if color == 'w' else 'p'
-    if position[left] == capturing_pawn or position[right] == capturing_pawn:
-        return True
-    return False
+    res = []
+    capture_square = last_move + 10*sense
+    if position[left] == capturing_pawn:
+        res.append((left,capture_square))
+    if position[right] == capturing_pawn:
+        res.append((right,capture_square))
+    return res
+
+
+def list_castle(position, color):
+    """gives the castle moves *color* can execute."""
+    res = []
+    return res
+
 
 if __name__ == '__main__':
     position = Position()
