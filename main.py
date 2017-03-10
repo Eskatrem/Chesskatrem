@@ -113,17 +113,37 @@ def get_pawn_moves(position, color, square):
     #TODO: handle promotions
     return res
 
+
 def convert_square(square):
     """converts a square in standard notation ("e2") into a number used internally to denote a square (15)."""
     x, y = ord(square[0])-96,int(square[1])-1
     return 10*y+x
 
-def convert_move(move):
-    """move is a string like "e2-e4". The function converts it into a move like (15,35). For now only the notation "<from>-<to>" is supported (not the algebraic notation."""
+
+def convert_move(move, color):
+    """move is a string like "e2-e4". The function converts it into a move like (15,35). 
+    For now only the notation "<from>-<to>" is supported (not the algebraic notation.
+    `color` is required for castle and en passant moves"""
+    if move == "00":
+        king_square = 5 if color == 'w' else 75
+        rook_square = 9 if color == 'w' else 79
+        return Move(castle=rook_square)
+    if move == '000':
+        king_square = 5 if color == 'w' else 75
+        rook_square = 1 if color == 'w' else 71
+        return Move(castle=rook_square)
+    if "e.p" in move:
+        #en passant captures need to be handled separately
+        tmp_move = move.split(" ")[0]
+        fr_square, to_square = move.split("-")
+        fr, to = convert_square(fr_square), convert_square(to_square)
+        capture_square = fr + ((to - fr) % 10)
+        return Move(fr, to, en_passant=capture_square)
     fr, to = move.split("-")
     return Move(convert_square(fr), convert_square(to))
 
-def get_moves_pieces(position,square, piece):
+
+def get_moves_pieces(position, square, piece):
     lower = piece.lower()
     res = []
     color = get_color(piece)
