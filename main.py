@@ -121,7 +121,7 @@ def convert_square(square):
 def convert_move(move):
     """move is a string like "e2-e4". The function converts it into a move like (15,35). For now only the notation "<from>-<to>" is supported (not the algebraic notation."""
     fr, to = move.split("-")
-    return (convert_square(fr), convert_square(to))
+    return Move(convert_square(fr), convert_square(to))
 
 def get_moves_pieces(position,square, piece):
     lower = piece.lower()
