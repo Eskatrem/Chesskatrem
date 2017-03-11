@@ -1,6 +1,6 @@
 #TODO: find if a position, a player is in check, and if the king is checkmated
 #also: handle en passant
-
+#TODO: add a field "rights_to_castle" to the class `Position` and update it after a rook/king move
 init_pos_pre = [['R' ,'N' ,'B' ,'Q' ,'K' ,'B' ,'N' ,'R'],
                 ['P' ,'P' ,'P' ,'P' ,'P' ,'P' ,'P' ,'P'],
                 [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
@@ -37,17 +37,23 @@ class Position:
 
     def make_move(self,move):
         fr, to = move.fr, move.to
+        print("fr =",fr,"to =",to)
         moving_piece = self.board[fr]
         self.board[fr] = ' '
         self.captured_piece = position[to]
         self.board[to] = moving_piece
         self.last_move = move
         if move.en_passant:
-            #TODO: remove the captured pawn here
-            position[move.en_passant] = ' '
+            # removing the captured pawn here
+            self.board[move.en_passant] = ' '
         if move.castle:
-            print(position)
-            #TODO: move the rook here
+            print(move.castle)
+            # moving the rook of the castle
+            new_rook_square = (move.castle + 3) if (move.castle % 10) == 1 else (move.castle - 2)
+            rook =  self.board[move.castle]
+            print(rook,self.board[8])
+            self.board[new_rook_square] = rook
+            self.board[move.castle] = ' '
     def __str__(self):
         res = ""
         for y in range(8):
@@ -128,8 +134,8 @@ def convert_move(move, color):
     `color` is required for castle and en passant moves"""
     if move == "00":
         king_square = 5 if color == 'w' else 75
-        rook_square = 9 if color == 'w' else 79
-        return Move(castle=rook_square)
+        rook_square = 8 if color == 'w' else 78
+        return Move(king_square, king_square+2,castle=rook_square)
     if move == '000':
         king_square = 5 if color == 'w' else 75
         rook_square = 1 if color == 'w' else 71
@@ -237,6 +243,14 @@ def switch_color(color):
 if __name__ == '__main__':
     position = Position()
     color = 'w'
+    moves = ["e2-e4","e7-e5","g1-f3","b8-c6","f1-c4","f8-c5","00"]
     print(position)
-    position.make_move(convert_move("e2-e4",color))
-    print(position)
+    # for move in moves:
+    #     position.make_move(convert_move(move,color))
+    #     color = switch_color(color)
+    #     print(position)
+    while True:
+        user_move = raw_input(">")
+        position.make_move(convert_move(user_move,color))
+        color = switch_color(color)
+        print(position)
