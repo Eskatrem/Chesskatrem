@@ -1,14 +1,14 @@
 #TODO: find if a position, a player is in check, and if the king is checkmated
 #also: handle en passant
 
-init_pos_pre = [['R','N','B','Q','K','B','N','R'],
-                ['P','P','P','P','P','P','P','P'],
+init_pos_pre = [['R' ,'N' ,'B' ,'Q' ,'K' ,'B' ,'N' ,'R'],
+                ['P' ,'P' ,'P' ,'P' ,'P' ,'P' ,'P' ,'P'],
                 [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
                 [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
                 [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
                 [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
                 ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-                ['r','n','b','q','k','b','n','r']]
+                ['r' ,'n' ,'b' ,'q' ,'k' ,'b' ,'n' ,'r']]
 
 init_pos = reduce(lambda x,y: x+y,map(lambda x: [' '] + x + [' '],init_pos_pre))
 
