@@ -44,7 +44,9 @@ class Position:
         self.last_move = move
         if move.en_passant:
             #TODO: remove the captured pawn here
+            position[move.en_passant] = ' '
         if move.castle:
+            print(position)
             #TODO: move the rook here
     def __str__(self):
         res = ""
@@ -229,8 +231,12 @@ def list_castle(position, color):
     return res
 
 
+def switch_color(color):
+    return 'b' if color == 'w' else 'w'
+
 if __name__ == '__main__':
     position = Position()
+    color = 'w'
     print(position)
-    position.make_move(convert_move("e2-e4"))
+    position.make_move(convert_move("e2-e4",color))
     print(position)
