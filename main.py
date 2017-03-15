@@ -24,15 +24,16 @@ class Move:
         self.en_passant = en_passant
         self.castle = castle
 
+        
 class Position:
 
-    def __init__(self,board=init_pos,can_castle=True):
+    def __init__(self, board=init_pos, rights_to_castle={'w': True, 'b': True}):
         self.board = board
-        self.can_castle = can_castle
         self.last_move = None
         self.captured_piece = ' '
+        self.rights_to_castle = rights_to_castle
         
-    def __getitem__(self,square):
+    def __getitem__(self, square):
         return self.board[square]
 
     def make_move(self,move):
@@ -169,6 +170,10 @@ def coordinates_to_square(x,y):
 
 def get_moves(position,color):
     res = []
+    #TODO: change this function:
+    #1. make sure the resulting position is not a check
+    #before adding a move to `res`
+    #2. check for castle and en-passant
     for x in range(8):
         for y in range(8):
             square = coordinates_to_square(x,y)
