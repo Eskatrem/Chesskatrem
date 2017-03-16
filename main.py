@@ -36,7 +36,7 @@ class Position:
     def __getitem__(self, square):
         return self.board[square]
 
-    def make_move(self,move):
+    def make_move(self,move,color):
         fr, to = move.fr, move.to
         print("fr =",fr,"to =",to)
         moving_piece = self.board[fr]
@@ -47,6 +47,22 @@ class Position:
         if move.en_passant:
             # removing the captured pawn here
             self.board[move.en_passant] = ' '
+        if moving_piece.lower() == 'k':
+            if self.rights_to_castle[color]['big']:
+                self.rights_to_castle[color]['big'] = False
+            if self.rights_to_castle[color]['small']:
+                self.rights_to_castle[color]['small'] = False
+        if moving_piece.lower() == 'r':
+            if color == 'w':
+                if fr == 71 and self.rights_to_castle[color]['big']:
+                    self.rights_to_castle[color]['big'] = False
+                if fr == 79 and self.rights_to_castle[color]['small']:
+                    self.rights_to_castle[color]['small'] = False
+            elif color == 'b':
+                if fr == 1 and self.rights_to_castle[color]['big']:
+                    self.rights_to_castle[color]['big'] = False
+                if fr == 9 and self.rights_to_castle[color]['small']:
+                    self.rights_to_castle[color]['small'] = False
         if move.castle:
             print(move.castle)
             # moving the rook of the castle
