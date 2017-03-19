@@ -231,6 +231,16 @@ def check_if_check(position, color):
     return False
 
 
+def is_legal(move,Position,color):
+    """returns True if a move is legal, False otherwise."""
+    moving_piece = position[move.fr]
+    if get_color(moving_piece) != color:
+        return False
+    #checking that the move are following a legal direction
+    direction = move.to - move.fr
+    return True
+
+
 #TODO: remove from the board the captured pawn
 def list_en_passant(position, color):
     """check if *color* can do an en passant capture."""
