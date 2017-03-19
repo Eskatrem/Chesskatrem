@@ -272,6 +272,6 @@ if __name__ == '__main__':
     #     print(position)
     while True:
         user_move = raw_input(">")
-        position.make_move(convert_move(user_move,color))
+        position.make_move(convert_move(user_move,color),color)
         color = switch_color(color)
         print(position)
