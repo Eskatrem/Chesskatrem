@@ -84,6 +84,26 @@ class Position:
 
 squares = range(80)
 
+
+def sign(x):
+    if x == 0:
+        return 0
+    return -1 if x < 0 else 1
+
+
+def all_p(pred, lst):
+    for elt in lst:
+        if not pref(elt):
+            return False
+    return True
+
+
+def any_p(pred, lst):
+    for elt in lst:
+        if pred(elt):
+            return True
+    return False
+
 def in_board(square):
     x, y = square%10, square/10
     return x > 0 and x < 9 and y > 0 and y < 9
@@ -231,13 +251,42 @@ def check_if_check(position, color):
     return False
 
 
-def is_legal(move,Position,color):
+def is_legal(move,position,color):
     """returns True if a move is legal, False otherwise."""
     moving_piece = position[move.fr]
     if get_color(moving_piece) != color:
         return False
     #checking that the move are following a legal direction
-    direction = move.to - move.fr
+    diff = move.to - move.fr
+    piece = moving_piece.lower()
+    if piece in ['b', 'q', 'r']:
+        possible_directions = directions[piece]
+        compatible_directions = filter(lambda d: sign(d) == sign(diff) and diff % d != 0, possible_directions)
+        if len(compatible_directions) == 0:
+            return False
+        # check if there is a piece in between move.fr and move.to
+        direction = compatible_directions[0]
+        tmp_square = move.fr + direction
+        while tmp_square != move.to:
+            if position[tmp_square] != ' ':
+                return False
+    elif piece in ['k', 'n']:
+        possible_directions = directions[piece]
+        compatible_directions = filter(lambda d: sign(d) == sign(diff) and diff % d != 0, possible_directions)
+        if len(compatible_directions) == 0:
+            return False
+        return True
+    else:
+        #in this case, piece == 'p'
+        sense = 1 if color == 'w' else -1
+        if diff not in [10 * sense, 10 * sense + 1, 10 * sense - 1, 20 * sense]:
+            return False
+        if diff == 10 * sense:
+            if position[move.to] != ' ':
+                return False
+        if diff == 10 * sense:
+            if position[move.to] != ' ' or position[move.fr + 10 * sense] != ' ' or not_in_second_rank(move.fr) :
+                return False
     return True
 
 
