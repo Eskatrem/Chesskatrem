@@ -1,6 +1,5 @@
 #TODO: find if a position, a player is in check, and if the king is checkmated
-#also: handle en passant
-#TODO: add a field "rights_to_castle" to the class `Position` and update it after a rook/king move
+#TODO: fix the board representation - it's currently reversed
 init_pos_pre = [['R' ,'N' ,'B' ,'Q' ,'K' ,'B' ,'N' ,'R'],
                 ['P' ,'P' ,'P' ,'P' ,'P' ,'P' ,'P' ,'P'],
                 [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
@@ -176,7 +175,7 @@ def convert_move(move, color):
     if move == '000':
         king_square = 5 if color == 'w' else 75
         rook_square = 1 if color == 'w' else 71
-        return Move(castle=rook_square)
+        return Move(king_square,king_square-3,castle=rook_square)
     if "e.p" in move:
         #en passant captures need to be handled separately
         tmp_move = move.split(" ")[0]
@@ -219,6 +218,18 @@ def get_moves(position,color):
             res.append({square:get_moves_pieces(position,square,piece)})
     return res
 
+
+def is_controlled(position, square, color):
+    """return True if a piece of `color` can go to `square`, False otherwise."""
+    for square in range(0, 80):
+        piece = position[square]
+        if get_color(piece) != color:
+            continue
+        possible_squares = get_moves_pieces(position, square, piece)
+        if square in possible_squares:
+            return True
+    return False
+
 def check_if_check(position, color):
     """return True if *color* is in check, False otherwise."""
     king = 'K' if color == 'w' else 'k'
@@ -251,8 +262,39 @@ def check_if_check(position, color):
     return False
 
 
+def second_row(square, color):
+    if color == 'w':
+        return square >= 10 and square <= 19
+    return square >= 60 and square <= 69
+
+
+def is_castle_legal(move, position, color):
+    castle_type = "small" if move.castle == 8 % 10 else "big"
+    if not position.rights_to_castle[color][castle_type]:
+        return False
+    if check_if_check(position,color):
+        return False
+    #now, checking that all the squares between the king
+    #and the rooks are empty
+    castle_dir = sign(move.fr - move.to)
+    start_square, end_square = move.fr + castle_dir, move.castle - castle_dir
+    for square in range(start_square, move.castle, castle_dir):
+        if position[square] != ' ':
+            return False
+    #now, checking if the squares between the king_square
+    #and the arrival square of the king are not controled
+    opposite_color = 'b' if color == 'w' else 'w'
+    for square in range(start_square, move.to, castle_dir):
+        if is_controlled(square, position, opposite_color):
+            return False
+    return True
+
+
 def is_legal(move,position,color):
     """returns True if a move is legal, False otherwise."""
+    if move.castle:
+        if not is_castle_legal(move, position, color):
+            return False
     moving_piece = position[move.fr]
     if get_color(moving_piece) != color:
         return False
@@ -285,7 +327,7 @@ def is_legal(move,position,color):
             if position[move.to] != ' ':
                 return False
         if diff == 10 * sense:
-            if position[move.to] != ' ' or position[move.fr + 10 * sense] != ' ' or not_in_second_rank(move.fr) :
+            if position[move.to] != ' ' or position[move.fr + 10 * sense] != ' ' or not second_rank(move.fr, color) :
                 return False
     return True
 
