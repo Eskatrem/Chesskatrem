@@ -72,7 +72,7 @@ class Position:
             self.board[move.castle] = ' '
     def __str__(self):
         res = ""
-        for y in range(8):
+        for y in range(7,-1,-1):
             tmp=""
             for x in range(1,9):
                 square = 10*y+x
