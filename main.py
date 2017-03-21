@@ -1,5 +1,8 @@
 #TODO: find if a position, a player is in check, and if the king is checkmated
 #TODO: fix the board representation - it's currently reversed
+
+from copy import copy
+
 init_pos_pre = [['R' ,'N' ,'B' ,'Q' ,'K' ,'B' ,'N' ,'R'],
                 ['P' ,'P' ,'P' ,'P' ,'P' ,'P' ,'P' ,'P'],
                 [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
@@ -35,51 +38,60 @@ class Position:
     def __getitem__(self, square):
         return self.board[square]
 
-    def make_move(self,move,color):
+    def __setitem__(self, square, value):
+        self.board[square] = value
+    
+    def make_move(self, move,color):
         fr, to = move.fr, move.to
-        print("fr =",fr,"to =",to)
-        moving_piece = self.board[fr]
-        self.board[fr] = ' '
-        self.captured_piece = position[to]
-        self.board[to] = moving_piece
-        self.last_move = move
+        new_position = Position(copy(self.board), copy(self.rights_to_castle))
+        new_position.last_move = self.last_move
+        new_position.captured_piece = self.captured_piece
+        
+        moving_piece = new_position.board[fr]
+        new_position.board[fr] = ' '
+        new_position.captured_piece = position[to]
+        new_position.board[to] = moving_piece
+        new_position.last_move = move
         if move.en_passant:
             # removing the captured pawn here
-            self.board[move.en_passant] = ' '
+            new_position.board[move.en_passant] = ' '
         if moving_piece.lower() == 'k':
-            if self.rights_to_castle[color]['big']:
-                self.rights_to_castle[color]['big'] = False
-            if self.rights_to_castle[color]['small']:
-                self.rights_to_castle[color]['small'] = False
+            if new_position.rights_to_castle[color]['big']:
+                new_position.rights_to_castle[color]['big'] = False
+            if new_position.rights_to_castle[color]['small']:
+                new_position.rights_to_castle[color]['small'] = False
         if moving_piece.lower() == 'r':
             if color == 'w':
-                if fr == 71 and self.rights_to_castle[color]['big']:
-                    self.rights_to_castle[color]['big'] = False
-                if fr == 79 and self.rights_to_castle[color]['small']:
-                    self.rights_to_castle[color]['small'] = False
+                if fr == 71 and new_position.rights_to_castle[color]['big']:
+                    new_position.rights_to_castle[color]['big'] = False
+                if fr == 79 and new_position.rights_to_castle[color]['small']:
+                    new_position.rights_to_castle[color]['small'] = False
             elif color == 'b':
-                if fr == 1 and self.rights_to_castle[color]['big']:
-                    self.rights_to_castle[color]['big'] = False
-                if fr == 9 and self.rights_to_castle[color]['small']:
-                    self.rights_to_castle[color]['small'] = False
+                if fr == 1 and new_position.rights_to_castle[color]['big']:
+                    new_position.rights_to_castle[color]['big'] = False
+                if fr == 9 and new_position.rights_to_castle[color]['small']:
+                    new_position.rights_to_castle[color]['small'] = False
         if move.castle:
             print(move.castle)
             # moving the rook of the castle
             new_rook_square = (move.castle + 3) if (move.castle % 10) == 1 else (move.castle - 2)
-            rook =  self.board[move.castle]
-            print(rook,self.board[8])
-            self.board[new_rook_square] = rook
-            self.board[move.castle] = ' '
+            rook =  new_position.board[move.castle]
+            print(rook,new_position.board[8])
+            new_position.board[new_rook_square] = rook
+            new_position.board[move.castle] = ' '
+        return new_position
+
     def __str__(self):
         res = ""
-        for y in range(7,-1,-1):
-            tmp=""
-            for x in range(1,9):
+        for y in range(7, -1, -1):
+            tmp = ""
+            for x in range(1, 9):
                 square = 10*y+x
                 tmp += self.board[square]
             tmp += "\n"
             res += tmp
         return res
+
 
 squares = range(80)
 
@@ -92,7 +104,7 @@ def sign(x):
 
 def all_p(pred, lst):
     for elt in lst:
-        if not pref(elt):
+        if not pred(elt):
             return False
     return True
 
@@ -200,22 +212,24 @@ def get_moves_pieces(position, square, piece):
         res += extend_direction(position, color, direction, square, continuous)
     return res
 
-def coordinates_to_square(x,y):
+
+def coordinates_to_square(x, y):
     return x+1+10*y
 
-def get_moves(position,color):
+
+def get_moves(position, color):
     res = []
-    #TODO: change this function:
-    #1. make sure the resulting position is not a check
-    #before adding a move to `res`
-    #2. check for castle and en-passant
+    # TODO: change this function:
+    # 1. make sure the resulting position is not a check
+    # before adding a move to `res`
+    # 2. check for castle and en-passant
     for x in range(8):
         for y in range(8):
-            square = coordinates_to_square(x,y)
+            square = coordinates_to_square(x, y)
             piece = position[square]
             if piece == ' ' or get_color(piece) != color:
                 continue
-            res.append({square:get_moves_pieces(position,square,piece)})
+            res.append({square: get_moves_pieces(position, square, piece)})
     return res
 
 
@@ -274,15 +288,15 @@ def is_castle_legal(move, position, color):
         return False
     if check_if_check(position,color):
         return False
-    #now, checking that all the squares between the king
-    #and the rooks are empty
+    # now, checking that all the squares between the king
+    # and the rooks are empty
     castle_dir = sign(move.fr - move.to)
     start_square, end_square = move.fr + castle_dir, move.castle - castle_dir
     for square in range(start_square, move.castle, castle_dir):
         if position[square] != ' ':
             return False
-    #now, checking if the squares between the king_square
-    #and the arrival square of the king are not controled
+    # now, checking if the squares between the king_square
+    # and the arrival square of the king are not controled
     opposite_color = 'b' if color == 'w' else 'w'
     for square in range(start_square, move.to, castle_dir):
         if is_controlled(square, position, opposite_color):
@@ -290,7 +304,7 @@ def is_castle_legal(move, position, color):
     return True
 
 
-def is_legal(move,position,color):
+def is_legal(move, position, color):
     """returns True if a move is legal, False otherwise."""
     if move.castle:
         if not is_castle_legal(move, position, color):
@@ -298,7 +312,7 @@ def is_legal(move,position,color):
     moving_piece = position[move.fr]
     if get_color(moving_piece) != color:
         return False
-    #checking that the move are following a legal direction
+    # checking that the move are following a legal direction
     diff = move.to - move.fr
     piece = moving_piece.lower()
     if piece in ['b', 'q', 'r']:
@@ -373,6 +387,6 @@ if __name__ == '__main__':
     #     print(position)
     while True:
         user_move = raw_input(">")
-        position.make_move(convert_move(user_move,color),color)
+        position = position.make_move(convert_move(user_move,color),color)
         color = switch_color(color)
         print(position)
