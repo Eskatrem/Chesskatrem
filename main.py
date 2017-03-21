@@ -291,6 +291,13 @@ def check_if_check(position, color):
     return False
 
 
+def is_checkmate(position, color):
+    return check_if_check(position, color) and len(get_moves(position, color)) == 0
+
+
+def is_stalemate(position, color):
+    return (not check_if_check(position, color)) and len(get_moves(position, color)) == 0
+
 def second_row(square, color):
     if color == 'w':
         return square >= 10 and square <= 19
