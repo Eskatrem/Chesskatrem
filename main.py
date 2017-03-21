@@ -3,6 +3,9 @@
 
 from copy import copy
 
+
+squares = filter(lambda x: x % 10 != 0 and x % 10 != 9, range(80))
+
 init_pos_pre = [['R' ,'N' ,'B' ,'Q' ,'K' ,'B' ,'N' ,'R'],
                 ['P' ,'P' ,'P' ,'P' ,'P' ,'P' ,'P' ,'P'],
                 [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
@@ -49,7 +52,7 @@ class Position:
         
         moving_piece = new_position.board[fr]
         new_position.board[fr] = ' '
-        new_position.captured_piece = position[to]
+        new_position.captured_piece = new_position[to]
         new_position.board[to] = moving_piece
         new_position.last_move = move
         if move.en_passant:
@@ -93,9 +96,6 @@ class Position:
         return res
 
 
-squares = range(80)
-
-
 def sign(x):
     if x == 0:
         return 0
@@ -115,58 +115,63 @@ def any_p(pred, lst):
             return True
     return False
 
+
 def in_board(square):
-    x, y = square%10, square/10
+    x, y = square % 10, square / 10
     return x > 0 and x < 9 and y > 0 and y < 9
+
 
 def get_color(piece):
     if piece == ' ':
         return ' '
     return 'w' if piece.isupper() else 'b'
 
+
 def extend_direction(position, color, direction, square, continuous):
     if not continuous:
         tmp_square = square + direction
-        return [] if get_color(position[tmp_square]) == color or not in_board(tmp_square) else [tmp_square]
+        return [] if get_color(position[tmp_square]) == color or not in_board(tmp_square) else [Move(square, tmp_square)]
     res = []
     tmp_square = square + direction
     while in_board(square) and position[tmp_square] != ' ':
-        res.append(tmp_square)
+        res.append(Move(square, tmp_square))
         tmp_square = tmp_square + direction
     if in_board(square) and position[tmp_square] != color:
-        res.append(tmp_square)
+        res.append(Move(square, tmp_square))
     return res
+
 
 def go_to_end_of_direction(position,direction,square):
     """from a given square, goes to the end of a direction, that is: either the last square on board, or the first piece that is reached."""
     tmp_square = square + direction
     while in_board(tmp_square) and position[tmp_square] == ' ':
         tmp_square = tmp_square + direction
-    return position[tmp_square]
+    return tmp_square
+
 
 def get_pawn_moves(position, color, square):
     """special function to find out the moves a pawn can make."""
     direction_move = -10 if color == 'b' else 10
     second_row = 1 if color == 'w' else '6'
     res = []
-    if square % 10 == second_row:
+    if square / 10 == second_row:
         extra_direction = 20 if color == 'w' else -20
         tmp_square = square + extra_direction
         if position[tmp_square] != color:
-            res.append(tmp_square)
+            res.append(Move(square, tmp_square))
     tmp_square = square + direction_move
     if in_board(tmp_square) and position[tmp_square] != color:
-        res.append(tmp_square)
-    #now handling captures
-    capture_directions = [9,11] if color == 'w' else [-11,-9]
+        res.append(Move(square, tmp_square))
+    # now handling captures
+    capture_directions = [9, 11] if color == 'w' else [-11, -9]
     for direction in capture_directions:
         tmp_square = square + direction_move
         if not in_board(tmp_square):
             continue
         tmp = position[tmp_square]
         if tmp != ' ' and tmp != color:
-            res.append(tmp_square)
-    #TODO: handle promotions
+            res.append(Move(square, tmp_square))
+    # TODO: handle promotions
     return res
 
 
@@ -206,8 +211,8 @@ def get_moves_pieces(position, square, piece):
     if lower != 'p':
         dirs = directions[lower]
     else:
-        return get_pawn_moves(position, color,square)
-    continuous = lower not in ['p','n']
+        return get_pawn_moves(position, color, square)
+    continuous = lower not in ['p', 'n']
     for direction in dirs:
         res += extend_direction(position, color, direction, square, continuous)
     return res
@@ -229,7 +234,13 @@ def get_moves(position, color):
             piece = position[square]
             if piece == ' ' or get_color(piece) != color:
                 continue
-            res.append({square: get_moves_pieces(position, square, piece)})
+            moves_piece = get_moves_pieces(position, square, piece)
+            for move in moves_piece:
+                tmp_pos = position.make_move(move, color)
+                if not check_if_check(tmp_pos, color):
+                    res.append(move)
+                else:
+                    print("we have a check with move",move.fr, move.to)
     return res
 
 
@@ -244,33 +255,37 @@ def is_controlled(position, square, color):
             return True
     return False
 
+
 def check_if_check(position, color):
     """return True if *color* is in check, False otherwise."""
     king = 'K' if color == 'w' else 'k'
-    #get king's position
-    for x,y in [(x,y) for x in range(8) for y in range(8)]:
-        square = coordinates_to_square(x,y)
+    # get king's position
+    for square in squares:
         piece = position[square]
         if piece == king:
             king_square = square
             break
-    #checking one step directions
+    # checking one step directions
     sense = 1 if color == 'w' else -1
-    #colorize sets a piece to uppercase if the color is black (because
-    #it's the opposite color)
+    # colorize sets a piece to uppercase if the color is black (because
+    # it's the opposite color)
     colorize = (lambda x: x.upper()) if color == 'b' else (lambda x: x)
     dirs = [(10,['k']),(-10,['k']),(10*sense+1,['k','p']),(10*sense-1,['k','p']),(-10*sense+1,['k']),(-10*sense-1,['k']),(1,['k']),(-1,['k']),
             (19,['n']),(21,['n']),(12,['n']),(8,['n']),(-12,['n']),(-8,['n']),(-19,['n']),(-21,['n'])]
     for d in dirs:
         move, compatible_pieces = d[0], map(colorize, d[1])
         square = king_square + move
+        if not in_board(square):
+            continue
         if position[square] in compatible_pieces:
             return True
-    #now checking multi steps directions
+    # now checking multi steps directions
     dirs = [(10,['r','q']),(-10,['r','q']),(1,['r','q']),(-1,['r','q']),(11,['b','q']),(9,['b','q']),(-9,['b','q']),(-11,['b','q'])]
     for d in dirs:
         move, compatible_pieces = d[0], map(colorize, d[1])
         square = go_to_end_of_direction(position, move, king_square)
+        if not in_board(square):
+            continue
         if position[square] in compatible_pieces:
             return True
     return False
