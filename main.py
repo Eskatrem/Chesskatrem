@@ -2,7 +2,7 @@
 #TODO: fix the board representation - it's currently reversed
 
 from copy import copy
-
+from random import choice
 
 squares = filter(lambda x: x % 10 != 0 and x % 10 != 9, range(80))
 
@@ -32,7 +32,7 @@ class Move:
         
 class Position:
 
-    def __init__(self, board=init_pos, rights_to_castle={'w': True, 'b': True}):
+    def __init__(self, board=init_pos, rights_to_castle={'w': {'big':True,'small':True}, 'b': {'big': True, 'small': True}}):
         self.board = board
         self.last_move = None
         self.captured_piece = ' '
@@ -117,8 +117,10 @@ def any_p(pred, lst):
 
 
 def in_board(square):
+    if square < 0 or square > 79:
+        return False
     x, y = square % 10, square / 10
-    return x > 0 and x < 9 and y > 0 and y < 9
+    return x > 0 and x < 9 and y > 0 and y < 8
 
 
 def get_color(piece):
@@ -130,13 +132,13 @@ def get_color(piece):
 def extend_direction(position, color, direction, square, continuous):
     if not continuous:
         tmp_square = square + direction
-        return [] if get_color(position[tmp_square]) == color or not in_board(tmp_square) else [Move(square, tmp_square)]
+        return [] if not in_board(tmp_square) or get_color(position[tmp_square]) == color else [Move(square, tmp_square)]
     res = []
     tmp_square = square + direction
-    while in_board(square) and position[tmp_square] != ' ':
+    while in_board(tmp_square) and position[tmp_square] == ' ':
         res.append(Move(square, tmp_square))
         tmp_square = tmp_square + direction
-    if in_board(square) and position[tmp_square] != color:
+    if in_board(tmp_square) and get_color(position[tmp_square]) != color:
         res.append(Move(square, tmp_square))
     return res
 
@@ -212,7 +214,7 @@ def get_moves_pieces(position, square, piece):
         dirs = directions[lower]
     else:
         return get_pawn_moves(position, color, square)
-    continuous = lower not in ['p', 'n']
+    continuous = lower not in ['p', 'n', 'k']
     for direction in dirs:
         res += extend_direction(position, color, direction, square, continuous)
     return res
@@ -237,6 +239,8 @@ def get_moves(position, color):
             moves_piece = get_moves_pieces(position, square, piece)
             for move in moves_piece:
                 tmp_pos = position.make_move(move, color)
+                print(position)
+                print(move.fr, move.to, move.castle)
                 if not check_if_check(tmp_pos, color):
                     res.append(move)
                 else:
@@ -260,11 +264,15 @@ def check_if_check(position, color):
     """return True if *color* is in check, False otherwise."""
     king = 'K' if color == 'w' else 'k'
     # get king's position
+    print(position)
+    king_square = None
     for square in squares:
         piece = position[square]
         if piece == king:
             king_square = square
             break
+    if king_square is None:
+        import pdb; pdb.set_trace()
     # checking one step directions
     sense = 1 if color == 'w' else -1
     # colorize sets a piece to uppercase if the color is black (because
@@ -277,6 +285,7 @@ def check_if_check(position, color):
         square = king_square + move
         if not in_board(square):
             continue
+        print square
         if position[square] in compatible_pieces:
             return True
     # now checking multi steps directions
@@ -410,5 +419,10 @@ if __name__ == '__main__':
     while True:
         user_move = raw_input(">")
         position = position.make_move(convert_move(user_move,color),color)
+        print(position)
+        color = switch_color(color)
+        possible_moves = get_moves(position, color)
+        move = choice(possible_moves)
+        position = position.make_move(move, color)
         color = switch_color(color)
         print(position)
