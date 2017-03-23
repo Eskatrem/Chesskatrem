@@ -400,6 +400,34 @@ def list_castle(position, color):
 def switch_color(color):
     return 'b' if color == 'w' else 'w'
 
+
+def make_tree(position, color, depth):
+    if depth == 0:
+        return position
+    possible_moves = get_moves(position, color)
+    new_positions = map(lambda move: position.make_move(move, color), possible_moves)
+    if depth == 1:
+        return zip(possible_moves, new_positions)
+    else:
+        new_color, new_depth = switch_color(color), depth - 1
+        return map(lambda new_position: make_tree(new_position, new_color, new_depth), new_positions)
+
+
+
+def is_terminal(branch):
+    return type(branch) is tuple
+    
+    
+def min_max(tree, evalf, color):
+    """min max algorithm. evalf is the evaluation function."""
+    if is_terminal(tree):
+        move, position = tree
+        return evalf(position)
+    chooser = max if color == 'w' else min
+    new_color = switch_color(color)
+    scores = map(lambda x: min_max(x, evalf, new_color), tree)
+    return None
+    
 if __name__ == '__main__':
     position = Position()
     color = 'w'
