@@ -1,24 +1,25 @@
-#TODO: find if a position, a player is in check, and if the king is checkmated
-#TODO: fix the board representation - it's currently reversed
+#TODO now: start AI function
 
 from copy import copy
 from random import choice
 
 squares = filter(lambda x: x % 10 != 0 and x % 10 != 9, range(80))
 
-init_pos_pre = [['R' ,'N' ,'B' ,'Q' ,'K' ,'B' ,'N' ,'R'],
-                ['P' ,'P' ,'P' ,'P' ,'P' ,'P' ,'P' ,'P'],
+init_pos_pre = [['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
                 [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
                 [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
                 [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
                 [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
                 ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-                ['r' ,'n' ,'b' ,'q' ,'k' ,'b' ,'n' ,'r']]
+                ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r']]
 
 init_pos = reduce(lambda x,y: x+y,map(lambda x: [' '] + x + [' '],init_pos_pre))
 
 
 directions = {'r':[1,-1,10,-10],'b':[11,9,-11,-9],'n':[21,19,12,8,-8,-12,-21,-19],'q':[1,-1,10,-10,11,9,-11,-9],'k':[1,-1,10,-10,11,9,-11,-9],'p':[1]}
+
+
 
 
 class Move:
@@ -75,11 +76,9 @@ class Position:
                 if fr == 9 and new_position.rights_to_castle[color]['small']:
                     new_position.rights_to_castle[color]['small'] = False
         if move.castle:
-            print(move.castle)
             # moving the rook of the castle
             new_rook_square = (move.castle + 3) if (move.castle % 10) == 1 else (move.castle - 2)
             rook =  new_position.board[move.castle]
-            print(rook,new_position.board[8])
             new_position.board[new_rook_square] = rook
             new_position.board[move.castle] = ' '
         return new_position
@@ -239,12 +238,8 @@ def get_moves(position, color):
             moves_piece = get_moves_pieces(position, square, piece)
             for move in moves_piece:
                 tmp_pos = position.make_move(move, color)
-                print(position)
-                print(move.fr, move.to, move.castle)
                 if not check_if_check(tmp_pos, color):
                     res.append(move)
-                else:
-                    print("we have a check with move",move.fr, move.to)
     return res
 
 
@@ -264,7 +259,6 @@ def check_if_check(position, color):
     """return True if *color* is in check, False otherwise."""
     king = 'K' if color == 'w' else 'k'
     # get king's position
-    print(position)
     king_square = None
     for square in squares:
         piece = position[square]
@@ -285,7 +279,6 @@ def check_if_check(position, color):
         square = king_square + move
         if not in_board(square):
             continue
-        print square
         if position[square] in compatible_pieces:
             return True
     # now checking multi steps directions
@@ -421,8 +414,20 @@ if __name__ == '__main__':
         position = position.make_move(convert_move(user_move,color),color)
         print(position)
         color = switch_color(color)
+        if is_checkmate(position, color): 
+            print("You win")
+            break
+        if is_stalemate(position, color):
+            print("draw")
+            break
         possible_moves = get_moves(position, color)
         move = choice(possible_moves)
         position = position.make_move(move, color)
         color = switch_color(color)
         print(position)
+        if is_checkmate(position, color): 
+            print("You lose")
+            break
+        if is_stalemate(position, color):
+            print("draw")
+            break
