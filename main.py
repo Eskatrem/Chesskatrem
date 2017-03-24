@@ -1,4 +1,4 @@
-#TODO now: start AI function
+#TODO now: in min_max, implement early termination when a position is checkmate or stalemate
 
 from copy import copy
 from random import choice
@@ -24,7 +24,7 @@ directions = {'r':[1,-1,10,-10],'b':[11,9,-11,-9],'n':[21,19,12,8,-8,-12,-21,-19
 
 class Move:
 
-    def __init__(self,fr,to,en_passant=False,castle=False):
+    def __init__(self, fr, to, en_passant=False, castle=False):
         self.fr = fr
         self.to = to
         self.en_passant = en_passant
@@ -44,8 +44,8 @@ class Position:
 
     def __setitem__(self, square, value):
         self.board[square] = value
-    
-    def make_move(self, move,color):
+
+    def make_move(self, move, color):
         fr, to = move.fr, move.to
         new_position = Position(copy(self.board), copy(self.rights_to_castle))
         new_position.last_move = self.last_move
@@ -401,33 +401,40 @@ def switch_color(color):
     return 'b' if color == 'w' else 'w'
 
 
-def make_tree(position, color, depth):
-    if depth == 0:
-        return position
-    possible_moves = get_moves(position, color)
-    new_positions = map(lambda move: position.make_move(move, color), possible_moves)
-    if depth == 1:
-        return zip(possible_moves, new_positions)
-    else:
-        new_color, new_depth = switch_color(color), depth - 1
-        return map(lambda new_position: make_tree(new_position, new_color, new_depth), new_positions)
+def chooser_cmp(vals, comparator):
+    """Assume that `vals` is in the form  [(elt, value),...].
+    returns the pair that has the value that is the largest according
+    to `comparator`."""
+    best_elt, score = vals[0]
+    for elt, value in vals[1:]:
+        if comparator(value, score):
+            best_elt, score = elt, value
+    return best_elt, score
 
 
-
-def is_terminal(branch):
-    return type(branch) is tuple
-    
-    
-def min_max(tree, evalf, color):
+def min_max(position, evalf, color, depth):
     """min max algorithm. evalf is the evaluation function."""
-    if is_terminal(tree):
-        move, position = tree
-        return evalf(position)
-    chooser = max if color == 'w' else min
+    if depth == 0:
+        return (0,evalf(position))
+    comparator = (lambda x, y: x > y) if color == 'w' else (lambda x, y: x < y)
     new_color = switch_color(color)
-    scores = map(lambda x: min_max(x, evalf, new_color), tree)
-    return None
-    
+    moves = get_moves(position, color)
+    positions = map(lambda move: position.make_move(move, color), moves)
+    scores = map(lambda pos: min_max(pos, evalf, new_color, depth-1)[1], positions)
+    return chooser_cmp(zip(moves,scores), comparator)
+
+
+
+def score_func(position):
+    material = 0
+    pieces_values = {'p':-1, 'r':-5,'n':-3,'b':-3,'q':-9,
+                     'P':1, 'R':5, 'N':3, 'B':3, 'Q':9,
+                     'k':0, 'K':0, ' ':0}
+    for square in squares:
+        piece = position[square]
+        material += pieces_values[piece]
+    return material
+
 if __name__ == '__main__':
     position = Position()
     color = 'w'
@@ -448,8 +455,7 @@ if __name__ == '__main__':
         if is_stalemate(position, color):
             print("draw")
             break
-        possible_moves = get_moves(position, color)
-        move = choice(possible_moves)
+        move, score = min_max(position, score_func, color, 3)
         position = position.make_move(move, color)
         color = switch_color(color)
         print(position)
