@@ -84,16 +84,27 @@ class Position:
         return new_position
 
     def __str__(self):
-        res = ""
+        line_sep = 40 * "-" + "\n"
+        res = line_sep
         for y in range(7, -1, -1):
-            tmp = ""
+            tmp = "|"
             for x in range(1, 9):
                 square = 10*y+x
-                tmp += self.board[square]
+                tmp += piece_to_str(self.board[square])
+                tmp += "|"
             tmp += "\n"
             res += tmp
+            res += line_sep
         return res
 
+
+def piece_to_str(piece):
+    if piece == ' ':
+        return "    "
+    if piece.isupper():
+        return "  " + piece + " "
+    else:
+        return " *" + piece.upper() + " "
 
 def sign(x):
     if x == 0:
