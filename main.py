@@ -419,6 +419,12 @@ def min_max(position, evalf, color, depth):
     comparator = (lambda x, y: x > y) if color == 'w' else (lambda x, y: x < y)
     new_color = switch_color(color)
     moves = get_moves(position, color)
+    if len(moves) == 0:
+        if check_if_check(position, color):
+            score = -100 if color == 'w' else 100
+            return (0, score)
+        else:
+            return (0,0)
     positions = map(lambda move: position.make_move(move, color), moves)
     scores = map(lambda pos: min_max(pos, evalf, new_color, depth-1)[1], positions)
     return chooser_cmp(zip(moves,scores), comparator)
