@@ -173,7 +173,7 @@ def get_pawn_moves(position, color, square):
         if position[tmp_square] != color:
             res.append(Move(square, tmp_square))
     tmp_square = square + direction_move
-    if in_board(tmp_square) and position[tmp_square] != color:
+    if in_board(tmp_square) and position[tmp_square] == ' ':
         res.append(Move(square, tmp_square))
     # now handling captures
     capture_directions = [9, 11] if color == 'w' else [-11, -9]
@@ -238,9 +238,7 @@ def coordinates_to_square(x, y):
 def get_moves(position, color):
     res = []
     # TODO: change this function:
-    # 1. make sure the resulting position is not a check
-    # before adding a move to `res`
-    # 2. check for castle and en-passant
+    # check for castle and en-passant
     for x in range(8):
         for y in range(8):
             square = coordinates_to_square(x, y)
@@ -377,8 +375,8 @@ def is_legal(move, position, color):
         if diff == 10 * sense:
             if position[move.to] != ' ':
                 return False
-        if diff == 10 * sense:
-            if position[move.to] != ' ' or position[move.fr + 10 * sense] != ' ' or not second_rank(move.fr, color) :
+        if diff == 20 * sense:
+            if position[move.to] != ' ' or position[move.fr + 10 * sense] != ' ' or not second_row(move.fr, color) :
                 return False
     return True
 
