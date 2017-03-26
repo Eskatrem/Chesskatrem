@@ -106,6 +106,7 @@ def piece_to_str(piece):
     else:
         return " *" + piece.upper() + " "
 
+
 def sign(x):
     if x == 0:
         return 0
@@ -153,7 +154,7 @@ def extend_direction(position, color, direction, square, continuous):
     return res
 
 
-def go_to_end_of_direction(position,direction,square):
+def go_to_end_of_direction(position, direction, square):
     """from a given square, goes to the end of a direction, that is: either the last square on board, or the first piece that is reached."""
     tmp_square = square + direction
     while in_board(tmp_square) and position[tmp_square] == ' ':
@@ -352,7 +353,7 @@ def is_legal(move, position, color):
     piece = moving_piece.lower()
     if piece in ['b', 'q', 'r']:
         possible_directions = directions[piece]
-        compatible_directions = filter(lambda d: sign(d) == sign(diff) and diff % d != 0, possible_directions)
+        compatible_directions = filter(lambda d: sign(d) == sign(diff) and diff % d == 0 and abs(d) != 1, possible_directions)
         if len(compatible_directions) == 0:
             return False
         # check if there is a piece in between move.fr and move.to
@@ -361,9 +362,10 @@ def is_legal(move, position, color):
         while tmp_square != move.to:
             if position[tmp_square] != ' ':
                 return False
+            tmp_square += direction
     elif piece in ['k', 'n']:
         possible_directions = directions[piece]
-        compatible_directions = filter(lambda d: sign(d) == sign(diff) and diff % d != 0, possible_directions)
+        compatible_directions = filter(lambda d: sign(d) == sign(diff) and diff % d != 0, possible_directions) if abs(diff) > 8 else [sign(diff)]
         if len(compatible_directions) == 0:
             return False
         return True
@@ -441,7 +443,6 @@ def min_max(position, evalf, color, depth):
     return chooser_cmp(zip(moves,scores), comparator)
 
 
-
 def score_func(position):
     material = 0
     pieces_values = {'p':-1, 'r':-5,'n':-3,'b':-3,'q':-9,
@@ -452,18 +453,24 @@ def score_func(position):
         material += pieces_values[piece]
     return material
 
+
 if __name__ == '__main__':
     position = Position()
-    color = 'w'
-    moves = ["e2-e4","e7-e5","g1-f3","b8-c6","f1-c4","f8-c5","00"]
     print(position)
-    # for move in moves:
-    #     position.make_move(convert_move(move,color))
-    #     color = switch_color(color)
-    #     print(position)
+    color = 'w'
     while True:
         user_move = raw_input(">")
-        position = position.make_move(convert_move(user_move,color),color)
+        if user_move == "d":
+            import pdb; pdb.set_trace()
+        move = convert_move(user_move, color)
+        while not is_legal(move, position, color):
+            if user_move == "d":
+                import pdb; pdb.set_trace()
+            print user_move
+            print("illegal move")
+            user_move = raw_input(">")
+            move = convert_move(user_move, color)
+        position = position.make_move(move, color)
         print(position)
         color = switch_color(color)
         if is_checkmate(position, color): 
