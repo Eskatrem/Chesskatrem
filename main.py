@@ -24,11 +24,12 @@ directions = {'r':[1,-1,10,-10],'b':[11,9,-11,-9],'n':[21,19,12,8,-8,-12,-21,-19
 
 class Move:
 
-    def __init__(self, fr, to, en_passant=False, castle=False):
+    def __init__(self, fr, to, en_passant=False, castle=False,promotion=None):
         self.fr = fr
         self.to = to
         self.en_passant = en_passant
         self.castle = castle
+        self.promotion = promotion
 
         
 class Position:
@@ -50,7 +51,6 @@ class Position:
         new_position = Position(copy(self.board), copy(self.rights_to_castle))
         new_position.last_move = self.last_move
         new_position.captured_piece = self.captured_piece
-        
         moving_piece = new_position.board[fr]
         new_position.board[fr] = ' '
         new_position.captured_piece = new_position[to]
@@ -78,9 +78,11 @@ class Position:
         if move.castle:
             # moving the rook of the castle
             new_rook_square = (move.castle + 3) if (move.castle % 10) == 1 else (move.castle - 2)
-            rook =  new_position.board[move.castle]
+            rook = new_position.board[move.castle]
             new_position.board[new_rook_square] = rook
             new_position.board[move.castle] = ' '
+        if move.promotion:
+            new_position.board[move.to] = move.promotion
         return new_position
 
     def __str__(self):
