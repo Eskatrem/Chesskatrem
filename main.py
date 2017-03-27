@@ -167,12 +167,12 @@ def go_to_end_of_direction(position, direction, square):
 def get_pawn_moves(position, color, square):
     """special function to find out the moves a pawn can make."""
     direction_move = -10 if color == 'b' else 10
-    second_row = 1 if color == 'w' else '6'
+    second_row = 1 if color == 'w' else 6
     res = []
     if square / 10 == second_row:
         extra_direction = 20 if color == 'w' else -20
         tmp_square = square + extra_direction
-        if position[tmp_square] != color:
+        if position[tmp_square] == ' ' and position[square + direction_move] == ' ':
             res.append(Move(square, tmp_square))
     tmp_square = square + direction_move
     if in_board(tmp_square) and position[tmp_square] == ' ':
@@ -180,7 +180,7 @@ def get_pawn_moves(position, color, square):
     # now handling captures
     capture_directions = [9, 11] if color == 'w' else [-11, -9]
     for direction in capture_directions:
-        tmp_square = square + direction_move
+        tmp_square = square + direction
         if not in_board(tmp_square):
             continue
         tmp = position[tmp_square]
