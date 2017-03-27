@@ -444,14 +444,49 @@ def min_max(position, evalf, color, depth):
 
 
 def score_func(position):
-    material = 0
+    material, controlled_squares = 0, 0
     pieces_values = {'p':-1, 'r':-5,'n':-3,'b':-3,'q':-9,
                      'P':1, 'R':5, 'N':3, 'B':3, 'Q':9,
                      'k':0, 'K':0, ' ':0}
+    get_sense = lambda piece: 1 if piece.isupper() else -1
     for square in squares:
         piece = position[square]
         material += pieces_values[piece]
-    return material
+        if piece in ['k', 'K', ' ']:
+            continue
+        if piece in ['p', 'P']:
+            piece_color = get_color(piece)
+            sense = get_sense(piece)
+            new_squares = [square + 10 * sense + 1, square + 10 * sense - 1]
+            for new_square in new_squares:
+                if in_board(new_square) and get_color(position[new_square]) != color:
+                    controlled_squares += sense
+            continue
+        new_squares = get_moves_pieces(position, square, piece)
+        sense = get_sense(piece)
+        controlled_squares += sense*len(new_squares)
+    return material + float(controlled_squares)/128
+
+
+def parse_move(move_str, position, color):
+    """converts move annotation to a `Move` object."""
+    if move_str == "00":
+        if color == "w":
+            return Move(5, 2, castle="small")
+        else:
+            return Move(75, 72, castle="small")
+    if move_str == "000":
+        if color == "w":
+            return Move(5, 2, castle="big")
+        else:
+            return Move(75, 72, castle="big")
+    splits = move_str.split("-")
+    if len(splits) != 2:
+        return "error: I don't understand your move."
+    fr = convert_square(splits[0])
+    if fr not in squares:
+        return "error: I don't understand your move."
+    return None
 
 
 if __name__ == '__main__':
