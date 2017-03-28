@@ -1,7 +1,32 @@
 #TODO now: in min_max, implement early termination when a position is checkmate or stalemate
 
+
+# bug in this position:
+# ----------------------------------------
+# | *R |    | *B |    |    |    |    | *R |
+# ----------------------------------------
+# | *P | *P | *P | *P |  Q | *K |  P | *P |
+# ----------------------------------------
+# |    |    |    |    |    |  B |    |    |
+# ----------------------------------------
+# |    |    |    |    |    | *P |    |    |
+# ----------------------------------------
+# |    |    |    |    |    |    |    |    |
+# ----------------------------------------
+# |  P |    |    |    |    |  N |    |    |
+# ----------------------------------------
+# |    |  P |    |    |    |  P |  P |  P |
+# ----------------------------------------
+# |  R |    |    |    |  K |    |    |  R |
+# ----------------------------------------
+
+
+
 from copy import copy
 from random import choice
+import sys
+from json import loads
+
 
 squares = filter(lambda x: x % 10 != 0 and x % 10 != 9, range(80))
 
@@ -15,6 +40,18 @@ init_pos_pre = [['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'],
                 ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r']]
 
 init_pos = reduce(lambda x,y: x+y,map(lambda x: [' '] + x + [' '],init_pos_pre))
+
+
+empty_board_pre = [[' ',' ',' ',' ',' ',' ',' ',' '],
+                   [' ',' ',' ',' ',' ',' ',' ',' '],
+                   [' ',' ',' ',' ',' ',' ',' ',' '],
+                   [' ',' ',' ',' ',' ',' ',' ',' '],
+                   [' ',' ',' ',' ',' ',' ',' ',' '],
+                   [' ',' ',' ',' ',' ',' ',' ',' '],
+                   [' ',' ',' ',' ',' ',' ',' ',' '],
+                   [' ',' ',' ',' ',' ',' ',' ',' ']]
+
+empty_board = reduce(lambda x,y: x+y, map(lambda x: [' '] + x +[' '], empty_board_pre))
 
 
 directions = {'r':[1,-1,10,-10],'b':[11,9,-11,-9],'n':[21,19,12,8,-8,-12,-21,-19],'q':[1,-1,10,-10,11,9,-11,-9],'k':[1,-1,10,-10,11,9,-11,-9],'p':[1]}
@@ -489,8 +526,19 @@ def parse_move(move_str, position, color):
     return None
 
 
+def parse_position(pos_dct):
+    w, b = pos_dct['w'], pos_dct['b']
+    res = Position(empty_board)
+    for piece, squares in w.iteritems():
+        for square in squares:
+            res[convert_square(square)] = piece.upper()
+    for piece, squares in b.iteritems():
+        for square in squares:
+            res[convert_square(square)] = piece.lower()
+    return res
+
 if __name__ == '__main__':
-    position = Position()
+    position = Position() if len(sys.argv) == 1 else parse_position(sys.argv[1])
     print(position)
     color = 'w'
     while True:
