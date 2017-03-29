@@ -1,6 +1,3 @@
-#TODO now: in min_max, implement early termination when a position is checkmate or stalemate
-
-
 # bug in this position:
 # ----------------------------------------
 # | *R |    | *B |    |    |    |    | *R |
@@ -20,7 +17,8 @@
 # |  R |    |    |    |  K |    |    |  R |
 # ----------------------------------------
 
-
+#to reproduce:
+#python main.py '{"castle": {"b": {"small": false, "big": false}, "w": {"small": true, "big": true}}, "b": {"p": ["a7", "b7", "c7", "d7", "g7", "h7", "f5"], "k": ["f7"], "r": ["a8", "h8"], "b": ["c8"]}, "w": {"b": ["f6"], "k": ["e1"], "n": ["f3"], "q": ["e2"], "p": ["a3", "b2", "f2", "g2", "h2", "g7"], "r": ["a1", "h1"]}}' w
 
 from copy import copy
 from random import choice
@@ -527,8 +525,8 @@ def parse_move(move_str, position, color):
 
 
 def parse_position(pos_dct):
-    w, b = pos_dct['w'], pos_dct['b']
-    res = Position(empty_board)
+    w, b, rights_to_castle = pos_dct['w'], pos_dct['b'], pos_dct['castle']
+    res = Position(empty_board, rights_to_castle=rights_to_castle)
     for piece, squares in w.iteritems():
         for square in squares:
             res[convert_square(square)] = piece.upper()
@@ -537,10 +535,12 @@ def parse_position(pos_dct):
             res[convert_square(square)] = piece.lower()
     return res
 
+
 if __name__ == '__main__':
-    position = Position() if len(sys.argv) == 1 else parse_position(sys.argv[1])
+    import pdb; pdb.set_trace()
+    position = Position() if len(sys.argv) == 1 else parse_position(loads(sys.argv[1]))
     print(position)
-    color = 'w'
+    color = 'w' if len(sys.argv) == 1 else sys.argv[2]
     while True:
         user_move = raw_input(">")
         if user_move == "d":
