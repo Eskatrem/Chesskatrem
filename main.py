@@ -18,7 +18,7 @@
 # ----------------------------------------
 
 #to reproduce:
-#python main.py '{"castle": {"b": {"small": false, "big": false}, "w": {"small": true, "big": true}}, "b": {"p": ["a7", "b7", "c7", "d7", "g7", "h7", "f5"], "k": ["f7"], "r": ["a8", "h8"], "b": ["c8"]}, "w": {"b": ["f6"], "k": ["e1"], "n": ["f3"], "q": ["e2"], "p": ["a3", "b2", "f2", "g2", "h2", "g7"], "r": ["a1", "h1"]}}' w
+#python main.py '{"castle": {"b": {"small": false, "big": false}, "w": {"small": true, "big": true}}, "b": {"p": ["a7", "b7", "c7", "d7", "h7", "f5"], "k": ["f7"], "r": ["a8", "h8"], "b": ["c8"]}, "w": {"b": ["f6"], "k": ["e1"], "n": ["f3"], "q": ["e2"], "p": ["a3", "b2", "f2", "g2", "h2", "g7"], "r": ["a1", "h1"]}}' w
 
 from copy import copy, deepcopy
 from random import choice
