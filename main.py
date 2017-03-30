@@ -1,3 +1,4 @@
+#TODO: handle promotions
 # bug in this position:
 # ----------------------------------------
 # | *R |    | *B |    |    |    |    | *R |
