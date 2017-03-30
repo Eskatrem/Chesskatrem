@@ -20,7 +20,7 @@
 #to reproduce:
 #python main.py '{"castle": {"b": {"small": false, "big": false}, "w": {"small": true, "big": true}}, "b": {"p": ["a7", "b7", "c7", "d7", "g7", "h7", "f5"], "k": ["f7"], "r": ["a8", "h8"], "b": ["c8"]}, "w": {"b": ["f6"], "k": ["e1"], "n": ["f3"], "q": ["e2"], "p": ["a3", "b2", "f2", "g2", "h2", "g7"], "r": ["a1", "h1"]}}' w
 
-from copy import copy
+from copy import copy, deepcopy
 from random import choice
 import sys
 from json import loads
@@ -83,7 +83,7 @@ class Position:
 
     def make_move(self, move, color):
         fr, to = move.fr, move.to
-        new_position = Position(copy(self.board), copy(self.rights_to_castle))
+        new_position = Position(copy(self.board), deepcopy(self.rights_to_castle))
         new_position.last_move = self.last_move
         new_position.captured_piece = self.captured_piece
         moving_piece = new_position.board[fr]
@@ -219,7 +219,7 @@ def get_pawn_moves(position, color, square):
         if not in_board(tmp_square):
             continue
         tmp = position[tmp_square]
-        if tmp != ' ' and tmp != color:
+        if tmp != ' ' and get_color(tmp) != color:
             res.append(Move(square, tmp_square))
     # TODO: handle promotions
     return res
@@ -378,8 +378,7 @@ def is_castle_legal(move, position, color):
 def is_legal(move, position, color):
     """returns True if a move is legal, False otherwise."""
     if move.castle:
-        if not is_castle_legal(move, position, color):
-            return False
+        return is_castle_legal(move, position, color)
     moving_piece = position[move.fr]
     if get_color(moving_piece) != color:
         return False
@@ -460,7 +459,7 @@ def chooser_cmp(vals, comparator):
     return best_elt, score
 
 
-def min_max(position, evalf, color, depth):
+def min_max(position, evalf, color, depth, moves_sequence=[]):
     """min max algorithm. evalf is the evaluation function."""
     if depth == 0:
         return (0,evalf(position))
@@ -474,7 +473,7 @@ def min_max(position, evalf, color, depth):
         else:
             return (0,0)
     positions = map(lambda move: position.make_move(move, color), moves)
-    scores = map(lambda pos: min_max(pos, evalf, new_color, depth-1)[1], positions)
+    scores = map(lambda pos, move: min_max(pos, evalf, new_color, depth - 1, moves_sequence+[move])[1], positions, moves)
     return chooser_cmp(zip(moves,scores), comparator)
 
 
@@ -537,7 +536,6 @@ def parse_position(pos_dct):
 
 
 if __name__ == '__main__':
-    import pdb; pdb.set_trace()
     position = Position() if len(sys.argv) == 1 else parse_position(loads(sys.argv[1]))
     print(position)
     color = 'w' if len(sys.argv) == 1 else sys.argv[2]
