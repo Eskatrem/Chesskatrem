@@ -521,7 +521,12 @@ def parse_move(move_str, position, color):
     fr = convert_square(splits[0])
     if fr not in squares:
         return "error: I don't understand your move."
-    return None
+    if "=" not in splits[1]:
+        to = splits[1]
+        return Move(fr, to)
+    to, prom = "=".split(splits[1])
+    piece = prom.upper() if color == 'w' else prom.lower()
+    return Move(fr, to, promotion=piece)
 
 
 def parse_position(pos_dct):
@@ -551,7 +556,7 @@ if __name__ == '__main__':
             print user_move
             print("illegal move")
             user_move = raw_input(">")
-            move = convert_move(user_move, color)
+            move = parse_move(user_move, position, color)
         position = position.make_move(move, color)
         print(position)
         color = switch_color(color)
