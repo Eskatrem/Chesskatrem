@@ -28,7 +28,7 @@
 from copy import copy, deepcopy
 from random import choice
 import sys
-from json import loads
+from json import loads, dumps
 
 
 squares = filter(lambda x: x % 10 != 0 and x % 10 != 9, range(80))
@@ -140,7 +140,31 @@ class Position:
             res += line_sep
         return res
 
+    def json(self):
+        res = {}
+        res['castle'] = self.rights_to_castle
+        b, w = {}, {}
+        for square in squares:
+            square_alpha = square_alpha_numeric(square)
+            piece = self[square]
+            if piece == ' ':
+                continue
+            dct = w if piece.isupper() else b
+            kind = piece.lower()
+            if kind in dct.keys():
+                dct[kind].append(square_alpha)
+            else:
+                dct[kind] = [square_alpha]
+        res['b'] = b
+        res['w'] = w
+        return res
 
+
+def square_alpha_numeric(square):
+    x, y = square % 10, square/10 + 1
+    return chr(x + 96) + str(y)
+
+                
 def piece_to_str(piece):
     if piece == ' ':
         return "    "
@@ -560,6 +584,10 @@ if __name__ == '__main__':
         user_move = raw_input(">")
         if user_move == "d":
             import pdb; pdb.set_trace()
+            continue
+        if user_move == "j":
+            print(dumps(position.json()))
+            continue
         move = parse_move(user_move, position, color)
         while not is_legal(move, position, color):
             import pdb; pdb.set_trace()
