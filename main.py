@@ -21,6 +21,10 @@
 #to reproduce:
 #python main.py '{"castle": {"b": {"small": false, "big": false}, "w": {"small": true, "big": true}}, "b": {"p": ["a7", "b7", "c7", "d7", "h7", "f5"], "k": ["f7"], "r": ["a8", "h8"], "b": ["c8"]}, "w": {"b": ["f6"], "k": ["e1"], "n": ["f3"], "q": ["e2"], "p": ["a3", "b2", "f2", "g2", "h2", "g7"], "r": ["a1", "h1"]}}' w
 
+
+# to test promotion
+# python2 main.py '{"b": {"k": ["a8"]}, "w": {"k": ["c8"], "p": ["d7"]}, "castle": {"b": {"small": false, "big": false}, "w": {"small": true, "big": true}}}' w
+
 from copy import copy, deepcopy
 from random import choice
 import sys
@@ -119,6 +123,7 @@ class Position:
             new_position.board[move.castle] = ' '
         if move.promotion:
             new_position.board[move.to] = move.promotion
+            
         return new_position
 
     def __str__(self):
@@ -388,7 +393,9 @@ def is_legal(move, position, color):
     piece = moving_piece.lower()
     if piece in ['b', 'q', 'r']:
         possible_directions = directions[piece]
-        compatible_directions = filter(lambda d: sign(d) == sign(diff) and diff % d == 0 and abs(d) != 1, possible_directions)
+        compatible_directions = filter(lambda d: sign(d) == sign(diff) and diff % d == 0, possible_directions)
+        if len(compatible_directions) > 1:
+            compatible_directions = filter(lambda d: abs(d) != 1, compatible_directions)
         if len(compatible_directions) == 0:
             return False
         # check if there is a piece in between move.fr and move.to
@@ -521,10 +528,14 @@ def parse_move(move_str, position, color):
     fr = convert_square(splits[0])
     if fr not in squares:
         return "error: I don't understand your move."
+    print(splits[0])
+    print(splits[1])
     if "=" not in splits[1]:
-        to = splits[1]
+        to = convert_square(splits[1])
         return Move(fr, to)
-    to, prom = "=".split(splits[1])
+
+    to, prom = splits[1].split('=')
+    to=convert_square(to)
     piece = prom.upper() if color == 'w' else prom.lower()
     return Move(fr, to, promotion=piece)
 
@@ -549,8 +560,9 @@ if __name__ == '__main__':
         user_move = raw_input(">")
         if user_move == "d":
             import pdb; pdb.set_trace()
-        move = convert_move(user_move, color)
+        move = parse_move(user_move, position, color)
         while not is_legal(move, position, color):
+            import pdb; pdb.set_trace()
             if user_move == "d":
                 import pdb; pdb.set_trace()
             print user_move
